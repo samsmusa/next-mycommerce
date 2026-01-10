@@ -51,7 +51,7 @@ const productSchema = z.object({
 export type ProductFormValues = z.infer<typeof productSchema>
 
 // Subcomponents
-const GeneralInformationCard: React.FC<{ form: UseFormReturn }> = ({form}) => (
+const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>General Information</CardTitle>
@@ -124,7 +124,7 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn }> = ({form}) => (
                     <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-900">Description</FormLabel>
                         <FormControl>
-                            <Editor {...field} content={field.value} onChange={field.onChange} />
+                            <Editor {...field} content={field.value} onChange={field.onChange}/>
                         </FormControl>
                         <FormMessage/>
                     </FormItem>
@@ -134,10 +134,10 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn }> = ({form}) => (
     </Card>
 )
 
-const PricingInventoryCard: React.FC<{ form: UseFormReturn; finalPrice: number }> = ({
-                                                                               form,
-                                                                               finalPrice,
-                                                                           }) => (
+const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; finalPrice: number }> = ({
+                                                                                                            form,
+                                                                                                            finalPrice,
+                                                                                                        }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Pricing & Inventory</CardTitle>
@@ -226,10 +226,13 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn; finalPrice: number }
     </Card>
 )
 
-const OrganizationCard: React.FC<{ form: UseFormReturn; categories: ProductCategoryMaxAggregateOutputType[] }> = ({
-                                                                                                            form,
-                                                                                                            categories,
-                                                                                                        }) => (
+const OrganizationCard: React.FC<{
+    form: UseFormReturn<ProductFormValues>;
+    categories: ProductCategoryMaxAggregateOutputType[]
+}> = ({
+          form,
+          categories,
+      }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Organization</CardTitle>
@@ -264,7 +267,7 @@ const OrganizationCard: React.FC<{ form: UseFormReturn; categories: ProductCateg
     </Card>
 )
 
-const StatusCard: React.FC<{ form: UseFormReturn }> = ({form}) => (
+const StatusCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Status</CardTitle>
