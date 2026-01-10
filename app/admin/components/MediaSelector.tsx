@@ -18,7 +18,6 @@ import {Media} from "@/app/types/media";
 import {getMediaByName, uploadMedia} from "@/app/server_action/media";
 
 
-
 interface MediaSelectorProps<T extends FieldValues> {
     control: Control<T>
     fieldName: Path<T>
@@ -219,20 +218,21 @@ export function MediaSelector<T extends FieldValues>({
     // Fetch initial media
     React.useEffect(() => {
         if (open && allMedia.length === 0) {
-            handleSearch("").then(r=> r && setAllMedia(r)).catch(() => {})
+            handleSearch("").then(r => r && setAllMedia(r)).catch(() => {
+            })
         }
     }, [open])
 
     const handleSearch = async (query: string) => {
         setSearchQuery(query)
-            try {
-                const results = await getMediaByName(query)
-                console.log("results", results)
-                setSearchResults(results.data)
-                return results.data
-            } catch (error) {
-                console.error("Search failed:", error)
-            }
+        try {
+            const results = await getMediaByName(query)
+            console.log("results", results)
+            setSearchResults(results.data)
+            return results.data
+        } catch (error) {
+            console.error("Search failed:", error)
+        }
     }
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,7 +261,7 @@ export function MediaSelector<T extends FieldValues>({
             name={fieldName}
             render={({field}) => {
 
-                const value = field.value as string|string[] | undefined;
+                const value = field.value as string | string[] | undefined;
 
                 const selectedIds: string[] = Array.isArray(value)
                     ? value
@@ -332,7 +332,7 @@ export function MediaSelector<T extends FieldValues>({
 
                             <DialogContent className="flex flex-col">
 
-                            <DialogHeader>
+                                <DialogHeader>
                                     <DialogTitle>
                                         {multiple ? "Select Media (Multiple)" : "Select Media"}
                                     </DialogTitle>

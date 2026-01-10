@@ -1,0 +1,16 @@
+.ql-container.ql-snow {
+    border: none !important;
+}
+.ql-editor:focus {
+    outline: none !important;
+    border: none !important;
+}
+.ql-toolbar.ql-snow {
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 2px solid rgb(175, 0, 0);
+}
+.ql-editor > * {
+    cursor: initial !important;
+}
