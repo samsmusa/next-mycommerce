@@ -210,6 +210,8 @@ model Product {
   slug           String   @unique
   description    String?
   additinal_info Json?
+  coverImageId   String
+  cover_image    ProductMedia  @relation("ProductCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
   sku            String   @unique
   price          Decimal  @db.Decimal(10, 2)
   discount       Decimal  @default(0) @db.Decimal(10, 2)
@@ -287,6 +289,8 @@ model ProductMedia {
 
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  coverImageForProduct Product[] @relation("ProductCoverImage")
 
   mediaId String
   media   Media  @relation(fields: [mediaId], references: [id], onDelete: Restrict)

@@ -18,8 +18,9 @@ import {createProduct, updateProduct} from "@/app/server_action/products"
 import {APP_ROUTE} from "@/lib/route"
 import {ProductCategoryMaxAggregateOutputType} from "@/prisma/prisma/models/ProductCategory"
 import {ProductMaxAggregateOutputType} from "@/prisma/prisma/models/Product"
-import {MediaSelector} from "@/app/admin/components/MediaSelector"
+import MediaSelector from "@/app/admin/components/mediaSelector2"
 import Editor from "@/app/admin/components/rich-editor"
+import {getMediaByName} from "@/app/server_action/media";
 
 // Types
 type RichTextEditorHandle = {
@@ -397,9 +398,9 @@ export default function ProductFormPage({
     // API calls
     const searchMedia = useCallback(async (query: string) => {
         try {
-            const response = await fetch(`/api/media/search?q=${encodeURIComponent(query)}`)
-            if (!response.ok) throw new Error("Search failed")
-            return response.json()
+            const response = await getMediaByName(query)
+            console.log(response)
+            return response.data
         } catch (error) {
             console.error("Media search error:", error)
             return []
@@ -407,21 +408,7 @@ export default function ProductFormPage({
     }, [])
 
     const uploadMedia = useCallback(async (file: File) => {
-        try {
-            const formData = new FormData()
-            formData.append("file", file)
-
-            const response = await fetch("/api/media/upload", {
-                method: "POST",
-                body: formData,
-            })
-
-            if (!response.ok) throw new Error("Upload failed")
-            return response.json()
-        } catch (error) {
-            console.error("Media upload error:", error)
-            throw error
-        }
+        console.log("done")
     }, [])
 
     // Form submission
@@ -481,7 +468,7 @@ export default function ProductFormPage({
 
                             <MediaSelector
                                 control={form.control}
-                                fieldName="featuredImageId"
+                                name="featuredImageId"
                                 label="Featured Image"
                                 description="Select a featured image for your product"
                                 multiple={false}
@@ -490,17 +477,17 @@ export default function ProductFormPage({
                                 onUpload={uploadMedia}
                             />
 
-                            <MediaSelector
-                                control={form.control}
-                                fieldName="mediaIds"
-                                label="Product Gallery"
-                                description="Add multiple images to your product gallery (max 10)"
-                                multiple
-                                accept="image/*"
-                                maxItems={10}
-                                onSearch={searchMedia}
-                                onUpload={uploadMedia}
-                            />
+                            {/*<MediaSelector*/}
+                            {/*    control={form.control}*/}
+                            {/*    fieldName="mediaIds"*/}
+                            {/*    label="Product Gallery"*/}
+                            {/*    description="Add multiple images to your product gallery (max 10)"*/}
+                            {/*    multiple*/}
+                            {/*    accept="image/*"*/}
+                            {/*    maxItems={10}*/}
+                            {/*    onSearch={searchMedia}*/}
+                            {/*    onUpload={uploadMedia}*/}
+                            {/*/>*/}
                         </div>
 
                         {/* Sidebar */}

@@ -1,5 +1,6 @@
 import {ProductMinAggregateOutputType} from "@/prisma/prisma/models/Product";
 import {ProductCategoryMaxAggregateOutputType} from "@/prisma/prisma/models/ProductCategory";
+import {Prisma} from "@prisma/client";
 
 // export type Common ={
 //     createdAt: string;
@@ -41,3 +42,7 @@ export enum CategoryType {
 export type ProductFormData = Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'slug'> & {
     slug?: string; // Optional in form, generated if empty
 };
+
+export type ProductMedia = Prisma.ProductMediaGetPayload<{
+    include: { media: true }
+}>;
