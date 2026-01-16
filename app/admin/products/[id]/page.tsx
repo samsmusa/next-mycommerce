@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation"
 import PageComponent from "@/app/admin/products/[id]/PageComponent"
 import { getCategories } from "@/app/server_action/categories"
-import { getProductById } from "@/app/server_action/products"
+import { getProduct } from "@/app/server_action/products"
 
 export default async function Page({
                                        params,
@@ -15,7 +15,7 @@ export default async function Page({
     // Fetch in parallel on the server
     const [categoriesRes, product] = await Promise.all([
         getCategories(),
-        isEdit ? getProductById(id) : Promise.resolve(null),
+        isEdit ? getProduct(id) : Promise.resolve(null),
     ])
 
     const categories = categoriesRes?.data ?? []

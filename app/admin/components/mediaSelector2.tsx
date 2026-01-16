@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useController } from 'react-hook-form';
 import { CheckCircle2, FileText, Image as ImageIcon, Info, Loader2, Plus, Search, Upload, X } from 'lucide-react';
 import Image from "next/image";
-import { uploadMedia } from "@/app/server_action/media";
+import {getMediaByName, uploadMedia} from "@/app/server_action/media";
 import {ProductMedia} from "@/app/types/product";
 import {Media} from "@/app/types/media";
 // import {ProductMediaMaxAggregateOutputType as ProductMedia} from "@/prisma/prisma/models/ProductMedia";
@@ -11,8 +11,6 @@ interface MediaSelectorProps {
     control: any;
     name: string;
     multiple?: boolean;
-    onSearch: (query: string) => Promise<ProductMedia[]>;
-    onUpload?: (file: File) => Promise<ProductMedia>;
     label?: string;
     maxFiles?: number;
     isPrimary?: boolean; // For single cover image selection
@@ -23,8 +21,6 @@ const MediaSelector: React.FC<MediaSelectorProps> = ({
                                                          control,
                                                          name,
                                                          multiple = false,
-                                                         onSearch,
-                                                         onUpload,
                                                          label = "Select Media",
                                                          maxFiles = 10,
                                                          isPrimary = false,
@@ -56,8 +52,8 @@ const MediaSelector: React.FC<MediaSelectorProps> = ({
     const handleSearch = async (query: string) => {
         setIsSearching(true);
         try {
-            const results = await onSearch(query);
-            setLibrary(results);
+            const results = await getMediaByName(query)
+            setLibrary(results.data);
         } catch (err) {
             console.error("Search failed", err);
         } finally {
@@ -121,7 +117,7 @@ const MediaSelector: React.FC<MediaSelectorProps> = ({
                 }
             }
         } else {
-            onChange(item);
+            onChange(item.id);
             setPrimaryMediaId(item.id);
             if (onPrimaryChange) onPrimaryChange(item.id as string);
             setIsOpen(false);

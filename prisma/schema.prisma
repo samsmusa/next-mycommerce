@@ -31,7 +31,7 @@ enum UserStatus {
 }
 
 model User {
-  id          String   @id @default(cuid())
+  id                String            @id @default(cuid())
   name              String
   email             String?
   phone             String            @unique
@@ -75,7 +75,7 @@ model Session {
 }
 
 model Account {
-  id          String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -96,7 +96,7 @@ model Account {
 }
 
 model Verification {
-  id        String   @id
+  id         String   @id
   identifier String
   value      String
   expiresAt  DateTime
@@ -205,21 +205,21 @@ enum MediaStatus {
 }
 
 model Product {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
-  slug           String   @unique
+  slug           String        @unique
   description    String?
   additinal_info Json?
-  coverImageId   String
-  cover_image    ProductMedia  @relation("ProductCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
-  sku            String   @unique
-  price          Decimal  @db.Decimal(10, 2)
-  discount       Decimal  @default(0) @db.Decimal(10, 2)
-  quantity       Int      @default(0)
-  isActive       Boolean  @default(true)
-  isFeatured     Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  coverImageId   String?
+  cover_image    ProductMedia? @relation("productCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  sku            String        @unique
+  price          Decimal       @db.Decimal(10, 2)
+  discount       Decimal       @default(0) @db.Decimal(10, 2)
+  quantity       Int           @default(0)
+  isActive       Boolean       @default(true)
+  isFeatured     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Creator/Owner
   createdBy String
@@ -290,7 +290,7 @@ model ProductMedia {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  coverImageForProduct Product[] @relation("ProductCoverImage")
+  coverImageForProduct Product[] @relation("productCoverImage")
 
   mediaId String
   media   Media  @relation(fields: [mediaId], references: [id], onDelete: Restrict)
@@ -503,7 +503,7 @@ model ReviewSummary {
   total_sale   Int    @db.Integer
   total_stock  Int    @db.Integer
 
-  productId String    @unique
+  productId String  @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])

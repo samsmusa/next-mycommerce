@@ -1,58 +1,78 @@
-"use client"
+"use client";
 
-import React, {useCallback, useMemo, useRef} from "react"
-import {useForm, UseFormReturn} from "react-hook-form"
-import {zodResolver} from "@hookform/resolvers/zod"
-import * as z from "zod"
-import {useRouter} from "next/navigation"
+import React, { useCallback, useMemo, useRef } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Badge} from "@/components/ui/badge"
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select"
-import {Switch} from "@/components/ui/switch"
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
-import {generateSlug} from "@/lib/utils"
-import {createProduct, updateProduct} from "@/app/server_action/products"
-import {APP_ROUTE} from "@/lib/route"
-import {ProductCategoryMaxAggregateOutputType} from "@/prisma/prisma/models/ProductCategory"
-import {ProductMaxAggregateOutputType} from "@/prisma/prisma/models/Product"
-import MediaSelector from "@/app/admin/components/mediaSelector2"
-import Editor from "@/app/admin/components/rich-editor"
-import {getMediaByName} from "@/app/server_action/media";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { generateSlug } from "@/lib/utils";
+import { createProduct, updateProduct } from "@/app/server_action/products";
+import { APP_ROUTE } from "@/lib/route";
+import MediaSelector from "@/app/admin/components/mediaSelector2";
+import Editor from "@/app/admin/components/rich-editor";
+import { getMediaByName } from "@/app/server_action/media";
+import {
+    CreateProductInput,
+    createProductSchema,
+    UpdateProductInput,
+    updateProductSchema,
+} from "@/app/zod/products";
+import { Product } from "@/app/types/product";
+import {ProductCategory} from "@/prisma/prisma/client";
 
-// Types
+// ============================================================================
+// TYPES
+// ============================================================================
+
 type RichTextEditorHandle = {
-    getContent: () => string
-}
+    getContent: () => string;
+};
+
+type ProductFormValues = CreateProductInput;
 
 type PageComponentProps = {
-    id?: string
-    initialCategories: ProductCategoryMaxAggregateOutputType[]
-    initialProduct: ProductMaxAggregateOutputType | null
+    id?: string;
+    initialCategories: ProductCategory[];
+    initialProduct: Product | null;
+};
+
+// ============================================================================
+// SUBCOMPONENTS
+// ============================================================================
+
+interface GeneralInformationCardProps {
+    form: UseFormReturn<ProductFormValues>;
 }
 
-// Schema
-const productSchema = z.object({
-    name: z.string().min(2, "Product name must be at least 2 characters"),
-    sku: z.string().min(1, "SKU is required"),
-    slug: z.string().optional(),
-    description: z.string().optional(),
-    price: z.coerce.number().min(0, "Price cannot be negative"),
-    discount: z.coerce.number().min(0, "Discount cannot be negative"),
-    quantity: z.coerce.number().min(0, "Quantity cannot be negative"),
-    categoryId: z.string().min(1, "Category is required"),
-    isActive: z.boolean().default(false),
-    isFeatured: z.boolean().default(false),
-    featuredImageId: z.string().optional(),
-    mediaIds: z.array(z.string()).optional().default([]),
-})
-
-export type ProductFormValues = z.infer<typeof productSchema>
-
-// Subcomponents
-const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}) => (
+const GeneralInformationCard: React.FC<GeneralInformationCardProps> = ({
+                                                                           form,
+                                                                       }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>General Information</CardTitle>
@@ -62,7 +82,7 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
             <FormField
                 control={form.control}
                 name="name"
-                render={({field}) => (
+                render={({ field }) => (
                     <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-900">
                             Product Name
@@ -74,7 +94,7 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
                                 {...field}
                             />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
@@ -83,9 +103,11 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
                 <FormField
                     control={form.control}
                     name="sku"
-                    render={({field}) => (
+                    render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-900">SKU</FormLabel>
+                            <FormLabel className="text-sm font-semibold text-slate-900">
+                                SKU
+                            </FormLabel>
                             <FormControl>
                                 <Input
                                     placeholder="e.g., PROD-001"
@@ -93,7 +115,7 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
                                     {...field}
                                 />
                             </FormControl>
-                            <FormMessage/>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -101,9 +123,11 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
                 <FormField
                     control={form.control}
                     name="slug"
-                    render={({field}) => (
+                    render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-900">URL Slug</FormLabel>
+                            <FormLabel className="text-sm font-semibold text-slate-900">
+                                URL Slug
+                            </FormLabel>
                             <FormControl>
                                 <Input
                                     placeholder="auto-generated"
@@ -112,7 +136,9 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
                                     {...field}
                                 />
                             </FormControl>
-                            <p className="text-xs text-slate-500 mt-1.5">Auto-generated from product name</p>
+                            <p className="text-xs text-slate-500 mt-1.5">
+                                Auto-generated from product name
+                            </p>
                         </FormItem>
                     )}
                 />
@@ -121,24 +147,35 @@ const GeneralInformationCard: React.FC<{ form: UseFormReturn<ProductFormValues> 
             <FormField
                 control={form.control}
                 name="description"
-                render={({field}) => (
+                render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="text-sm font-semibold text-slate-900">Description</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-slate-900">
+                            Description
+                        </FormLabel>
                         <FormControl>
-                            <Editor {...field} content={field.value} onChange={field.onChange}/>
+                            <Editor
+                                {...field}
+                                content={field.value}
+                                onChange={field.onChange}
+                            />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
         </CardContent>
     </Card>
-)
+);
 
-const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; finalPrice: number }> = ({
-                                                                                                            form,
-                                                                                                            finalPrice,
-                                                                                                        }) => (
+interface PricingInventoryCardProps {
+    form: UseFormReturn<ProductFormValues>;
+    finalPrice: number;
+}
+
+const PricingInventoryCard: React.FC<PricingInventoryCardProps> = ({
+                                                                       form,
+                                                                       finalPrice,
+                                                                   }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Pricing & Inventory</CardTitle>
@@ -149,9 +186,11 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
                 <FormField
                     control={form.control}
                     name="price"
-                    render={({field}) => (
+                    render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-900">Price</FormLabel>
+                            <FormLabel className="text-sm font-semibold text-slate-900">
+                                Price
+                            </FormLabel>
                             <FormControl>
                                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
@@ -166,7 +205,7 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
                                     />
                                 </div>
                             </FormControl>
-                            <FormMessage/>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -174,9 +213,11 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
                 <FormField
                     control={form.control}
                     name="discount"
-                    render={({field}) => (
+                    render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-sm font-semibold text-slate-900">Discount</FormLabel>
+                            <FormLabel className="text-sm font-semibold text-slate-900">
+                                Discount
+                            </FormLabel>
                             <FormControl>
                                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
@@ -191,16 +232,19 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
                                     />
                                 </div>
                             </FormControl>
-                            <FormMessage/>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
 
                 <FormItem>
-                    <FormLabel className="text-sm font-semibold text-slate-900">Final Price</FormLabel>
-                    <div
-                        className="flex items-center justify-center h-10 rounded-lg border border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">
-                        <span className="text-sm font-bold text-slate-900">${finalPrice.toFixed(2)}</span>
+                    <FormLabel className="text-sm font-semibold text-slate-900">
+                        Final Price
+                    </FormLabel>
+                    <div className="flex items-center justify-center h-10 rounded-lg border border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">
+            <span className="text-sm font-bold text-slate-900">
+              ${finalPrice.toFixed(2)}
+            </span>
                     </div>
                 </FormItem>
             </div>
@@ -208,9 +252,11 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
             <FormField
                 control={form.control}
                 name="quantity"
-                render={({field}) => (
+                render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="text-sm font-semibold text-slate-900">Stock Quantity</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-slate-900">
+                            Stock Quantity
+                        </FormLabel>
                         <FormControl>
                             <Input
                                 type="number"
@@ -219,21 +265,23 @@ const PricingInventoryCard: React.FC<{ form: UseFormReturn<ProductFormValues>; f
                                 {...field}
                             />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
         </CardContent>
     </Card>
-)
+);
 
-const OrganizationCard: React.FC<{
+interface OrganizationCardProps {
     form: UseFormReturn<ProductFormValues>;
-    categories: ProductCategoryMaxAggregateOutputType[]
-}> = ({
-          form,
-          categories,
-      }) => (
+    categories: ProductCategory[];
+}
+
+const OrganizationCard: React.FC<OrganizationCardProps> = ({
+                                                               form,
+                                                               categories,
+                                                           }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Organization</CardTitle>
@@ -243,32 +291,36 @@ const OrganizationCard: React.FC<{
             <FormField
                 control={form.control}
                 name="categoryId"
-                render={({field}) => (
+                render={({ field }) => (
                     <FormItem>
                         <FormLabel>Category</FormLabel>
                         <Select value={field.value ?? ""} onValueChange={field.onChange}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a category"/>
+                                    <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                                 {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={String(cat.id)}>
+                                    <SelectItem key={cat.id} value={cat.id}>
                                         {cat.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        <FormMessage/>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
         </CardContent>
     </Card>
-)
+);
 
-const StatusCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}) => (
+interface StatusCardProps {
+    form: UseFormReturn<ProductFormValues>;
+}
+
+const StatusCard: React.FC<StatusCardProps> = ({ form }) => (
     <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
             <CardTitle>Status</CardTitle>
@@ -278,14 +330,17 @@ const StatusCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}
             <FormField
                 control={form.control}
                 name="isActive"
-                render={({field}) => (
-                    <div
-                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3.5 hover:bg-slate-100 transition-colors">
+                render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3.5 hover:bg-slate-100 transition-colors">
                         <div className="flex-1">
-                            <p className="text-sm font-semibold text-slate-900">Product Active</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Make product visible to customers</p>
+                            <p className="text-sm font-semibold text-slate-900">
+                                Product Active
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Make product visible to customers
+                            </p>
                         </div>
-                        <Switch checked={field.value} onCheckedChange={field.onChange}/>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>
                 )}
             />
@@ -293,26 +348,33 @@ const StatusCard: React.FC<{ form: UseFormReturn<ProductFormValues> }> = ({form}
             <FormField
                 control={form.control}
                 name="isFeatured"
-                render={({field}) => (
-                    <div
-                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3.5 hover:bg-slate-100 transition-colors">
+                render={({ field }) => (
+                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3.5 hover:bg-slate-100 transition-colors">
                         <div className="flex-1">
                             <p className="text-sm font-semibold text-slate-900">Featured</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Highlight on storefront</p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Highlight on storefront
+                            </p>
                         </div>
-                        <Switch checked={field.value} onCheckedChange={field.onChange}/>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>
                 )}
             />
         </CardContent>
     </Card>
-)
+);
 
-const ActionButtons: React.FC<{
-    isSubmitting: boolean
-    isEdit: boolean
-    onCancel: () => void
-}> = ({isSubmitting, isEdit, onCancel}) => (
+interface ActionButtonsProps {
+    isSubmitting: boolean;
+    isEdit: boolean;
+    onCancel: () => void;
+}
+
+const ActionButtons: React.FC<ActionButtonsProps> = ({
+                                                         isSubmitting,
+                                                         isEdit,
+                                                         onCancel,
+                                                     }) => (
     <div className="space-y-3 sticky bottom-6">
         <Button
             type="submit"
@@ -322,7 +384,7 @@ const ActionButtons: React.FC<{
         >
             {isSubmitting ? (
                 <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"/>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Saving...
                 </>
             ) : isEdit ? (
@@ -343,98 +405,116 @@ const ActionButtons: React.FC<{
         </Button>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-            <p className="text-xs text-blue-700 font-medium">💾 Saved automatically via server actions</p>
+            <p className="text-xs text-blue-700 font-medium">
+                💾 Saved automatically via server actions
+            </p>
         </div>
     </div>
-)
+);
 
-// Main Component
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export default function ProductFormPage({
                                             id,
                                             initialCategories,
                                             initialProduct,
                                         }: PageComponentProps) {
-    const router = useRouter()
-    const isEdit = Boolean(id)
-    const editorRef = useRef<RichTextEditorHandle>(null)
+    const router = useRouter();
+    const isEdit = Boolean(id);
+    const editorRef = useRef<RichTextEditorHandle>(null);
 
-    // Form setup
+    // Form setup with proper schema
+    const formSchema = isEdit ? updateProductSchema : createProductSchema;
+
     const form = useForm<ProductFormValues>({
-        resolver: zodResolver(productSchema),
+        resolver: zodResolver(formSchema),
         defaultValues: {
             name: initialProduct?.name ?? "",
             sku: initialProduct?.sku ?? "",
             slug: initialProduct?.slug ?? "",
             description: initialProduct?.description ?? "",
-            price: Number(initialProduct?.price) || 0,
-            discount: Number(initialProduct?.discount) || 0,
-            quantity: Number(initialProduct?.quantity) || 0,
-            categoryId: String(initialProduct?.categoryId ?? ""),
-            isActive: initialProduct?.isActive ?? false,
+            price: initialProduct?.price ?? 0,
+            discount: initialProduct?.discount ?? 0,
+            quantity: initialProduct?.quantity ?? 0,
+            categoryId: initialProduct?.categoryId ?? "",
+            isActive: initialProduct?.isActive ?? true,
             isFeatured: initialProduct?.isFeatured ?? false,
-            featuredImageId: initialProduct?.id ?? "",
+            coverImageId: initialProduct?.coverImageId ?? "",
             mediaIds: [],
-        },
-    })
+            ...(isEdit ? {} : { createdBy: "cmj8e1loz00013ucr0uwcwgpd" }),
+        } as ProductFormValues,
+    });
 
-    const {handleSubmit, watch, formState} = form
-    const price = watch("price")
-    const discount = watch("discount")
-    const isActive = watch("isActive")
+    const { handleSubmit, watch, formState, setValue } = form;
+    const price = watch("price");
+    const discount = watch("discount");
+    const isActive = watch("isActive");
 
     // Memoized calculations
-    const finalPrice = useMemo(() => Math.max(0, price - discount), [price, discount])
+    const finalPrice = useMemo(() => Math.max(0, price - discount), [
+        price,
+        discount,
+    ]);
 
     // Auto-generate slug
     React.useEffect(() => {
-        const name = form.getValues("name")
-        const slug = form.getValues("slug")
+        const name = form.getValues("name");
+        const slug = form.getValues("slug");
 
         if (!slug && name) {
-            form.setValue("slug", generateSlug(name), {shouldDirty: true})
+            form.setValue("slug", generateSlug(name), { shouldDirty: true });
         }
-    }, [watch("name"), form])
+    }, [watch("name"), form]);
 
     // API calls
     const searchMedia = useCallback(async (query: string) => {
         try {
-            const response = await getMediaByName(query)
-            console.log(response)
-            return response.data
+            const response = await getMediaByName(query);
+            return response.data || [];
         } catch (error) {
-            console.error("Media search error:", error)
-            return []
+            console.error("Media search error:", error);
+            return [];
         }
-    }, [])
+    }, []);
 
     const uploadMedia = useCallback(async (file: File) => {
-        console.log("done")
-    }, [])
+        try {
+            // TODO: Implement media upload
+            console.log("Uploading media:", file.name);
+        } catch (error) {
+            console.error("Media upload error:", error);
+            throw error;
+        }
+    }, []);
 
     // Form submission
     const onSubmit = async (values: ProductFormValues) => {
+        console.log("values", values)
         try {
             const payload = {
                 ...values,
                 slug: values.slug || generateSlug(values.name),
-            }
+            };
 
             if (isEdit && id) {
-                await updateProduct(id, payload)
+                await updateProduct(id, payload);
             } else {
-                await createProduct(payload)
+                // For create, createdBy should be set from session/auth
+                await createProduct(payload as CreateProductInput);
             }
 
-            router.push(APP_ROUTE.ADMIN_PRODUCTS)
+            router.push(APP_ROUTE.ADMIN_PRODUCTS);
         } catch (error) {
-            console.error("Failed to save product:", error)
+            console.error("Failed to save product:", error);
             // TODO: Add toast notification for error
         }
-    }
+    };
 
     const handleCancel = () => {
-        router.push(APP_ROUTE.ADMIN_PRODUCTS)
-    }
+        router.push(APP_ROUTE.ADMIN_PRODUCTS);
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -460,40 +540,29 @@ export default function ProductFormPage({
                 </div>
 
                 <Form {...form}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-3">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="grid gap-8 lg:grid-cols-3"
+                    >
                         {/* Main Content */}
                         <div className="space-y-6 lg:col-span-2">
-                            <GeneralInformationCard form={form}/>
-                            <PricingInventoryCard form={form} finalPrice={finalPrice}/>
+                            <GeneralInformationCard form={form} />
+                            <PricingInventoryCard form={form} finalPrice={finalPrice} />
 
                             <MediaSelector
                                 control={form.control}
-                                name="featuredImageId"
+                                name="coverImageId"
                                 label="Featured Image"
                                 description="Select a featured image for your product"
                                 multiple={false}
                                 accept="image/*"
-                                onSearch={searchMedia}
-                                onUpload={uploadMedia}
                             />
-
-                            {/*<MediaSelector*/}
-                            {/*    control={form.control}*/}
-                            {/*    fieldName="mediaIds"*/}
-                            {/*    label="Product Gallery"*/}
-                            {/*    description="Add multiple images to your product gallery (max 10)"*/}
-                            {/*    multiple*/}
-                            {/*    accept="image/*"*/}
-                            {/*    maxItems={10}*/}
-                            {/*    onSearch={searchMedia}*/}
-                            {/*    onUpload={uploadMedia}*/}
-                            {/*/>*/}
                         </div>
 
                         {/* Sidebar */}
                         <div className="space-y-6">
-                            <OrganizationCard form={form} categories={initialCategories}/>
-                            <StatusCard form={form}/>
+                            <OrganizationCard form={form} categories={initialCategories} />
+                            <StatusCard form={form} />
                             <ActionButtons
                                 isSubmitting={formState.isSubmitting}
                                 isEdit={isEdit}
@@ -504,5 +573,5 @@ export default function ProductFormPage({
                 </Form>
             </div>
         </div>
-    )
+    );
 }
