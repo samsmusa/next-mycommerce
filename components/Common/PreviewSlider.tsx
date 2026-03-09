@@ -13,7 +13,7 @@ const PreviewSliderModal = () => {
 
   const data = useAppSelector((state) => state.productDetailsReducer.value);
 
-  const sliderRef = useRef(null);
+  const sliderRef = useRef<any>(null);
 
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return;

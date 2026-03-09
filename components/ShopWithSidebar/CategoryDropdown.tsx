@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 
-const CategoryItem = ({ category }) => {
-  const [selected, setSelected] = useState(false);
+const CategoryItem = ({ category, onChange }: { category: any, onChange: (id: string | null) => void }) => {
+  const selected = category.isRefined;
+  
   return (
     <button
       className={`${
         selected && "text-blue"
-      } group flex items-center justify-between ease-out duration-200 hover:text-blue `}
-      onClick={() => setSelected(!selected)}
+      } group flex items-center justify-between ease-out duration-200 hover:text-blue w-full`}
+      onClick={() => onChange(selected ? null : category.id)}
+      type="button"
     >
       <div className="flex items-center gap-2">
         <div
@@ -49,7 +51,7 @@ const CategoryItem = ({ category }) => {
   );
 };
 
-const CategoryDropdown = ({ categories }) => {
+const CategoryDropdown = ({ categories, onCategoryChange }: { categories: any[], onCategoryChange: (id: string | null) => void }) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
 
   return (
@@ -66,6 +68,7 @@ const CategoryDropdown = ({ categories }) => {
         <p className="text-dark">Category</p>
         <button
           aria-label="button for category dropdown"
+          type="button"
           className={`text-dark ease-out duration-200 ${
             toggleDropdown && "rotate-180"
           }`}
@@ -96,7 +99,7 @@ const CategoryDropdown = ({ categories }) => {
         }`}
       >
         {categories.map((category, key) => (
-          <CategoryItem key={key} category={category} />
+          <CategoryItem key={key} category={category} onChange={onCategoryChange} />
         ))}
       </div>
     </div>

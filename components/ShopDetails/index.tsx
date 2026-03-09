@@ -5,9 +5,13 @@ import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
 import RecentlyViewdItems from "./RecentlyViewd";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
-import { useAppSelector } from "@/redux/store";
+import { Product as FrontendProduct } from "@/types/product";
 
-const ShopDetails = () => {
+interface ShopDetailsProps {
+  product: FrontendProduct;
+}
+
+const ShopDetails = ({ product }: ShopDetailsProps) => {
   const [activeColor, setActiveColor] = useState("blue");
   const { openPreviewModal } = usePreviewSlider();
   const [previewImg, setPreviewImg] = useState(0);
@@ -75,27 +79,15 @@ const ShopDetails = () => {
 
   const colors = ["red", "blue", "orange", "pink", "purple"];
 
-  const alreadyExist = localStorage.getItem("productDetails");
-  const productFromStorage = useAppSelector(
-    (state) => state.productDetailsReducer.value
-  );
-
-  const product = alreadyExist ? JSON.parse(alreadyExist) : productFromStorage;
-
-  useEffect(() => {
-    localStorage.setItem("productDetails", JSON.stringify(product));
-  }, [product]);
-
-  // pass the product here when you get the real data.
   const handlePreviewSlider = () => {
     openPreviewModal();
   };
 
   return (
     <>
-      <Breadcrumb title={"Shop Details"} pages={["shop details"]} />
+      <Breadcrumb title={product?.title || "Shop Details"} pages={["shop", product?.title || "details"]} />
 
-      {product.title === "" ? (
+      {!product ? (
         "Please add product"
       ) : (
         <>
@@ -728,24 +720,15 @@ const ShopDetails = () => {
                     <h2 className="font-medium text-2xl text-dark mb-7">
                       Specifications:
                     </h2>
-
-                    <p className="mb-6">
-                      Lorem Ipsum is simply dummy text of the printing and
-                      typesetting industry. Lorem Ipsum has been the
-                      industry&apos;s standard dummy text ever since the 1500s,
-                      when an unknown printer took a galley of type and
-                      scrambled it to make a type specimen book.
-                    </p>
-                    <p className="mb-6">
-                      It has survived not only five centuries, but also the leap
-                      into electronic typesetting, remaining essentially
-                      unchanged. It was popularised in the 1960s.
-                    </p>
-                    <p>
-                      with the release of Letraset sheets containing Lorem Ipsum
-                      passages, and more recently with desktop publishing
-                      software like Aldus PageMaker including versions.
-                    </p>
+                    
+                    {product.description ? (
+                      <div 
+                        className="mb-6 prose max-w-none" 
+                        dangerouslySetInnerHTML={{ __html: product.description }} 
+                      />
+                    ) : (
+                      <p className="mb-6">No description available for this product.</p>
+                    )}
                   </div>
 
                   <div className="max-w-[447px] w-full">

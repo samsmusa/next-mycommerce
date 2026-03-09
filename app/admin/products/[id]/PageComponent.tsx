@@ -429,7 +429,7 @@ export default function ProductFormPage({
     const formSchema = isEdit ? updateProductSchema : createProductSchema;
 
     const form = useForm<ProductFormValues>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             name: initialProduct?.name ?? "",
             sku: initialProduct?.sku ?? "",

@@ -10,7 +10,7 @@ import "swiper/css";
 import SingleItem from "./SingleItem";
 
 const Testimonials = () => {
-  const sliderRef = useRef(null);
+  const sliderRef = useRef<any>(null);
 
   const handlePrev = useCallback(() => {
     if (!sliderRef.current) return;

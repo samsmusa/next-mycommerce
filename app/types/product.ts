@@ -1,33 +1,13 @@
-import {ProductMinAggregateOutputType} from "@/prisma/prisma/models/Product";
-import {ProductCategoryMaxAggregateOutputType} from "@/prisma/prisma/models/ProductCategory";
-import {Prisma} from "@prisma/client";
+import {ProductCategory, Product as PrismaProduct} from "@/prisma/prisma/client";
+import {Prisma} from "@/prisma/prisma/client";
 
-// export type Common ={
-//     createdAt: string;
-//     updatedAt: string;
-// }
-// type CommonLiteral = 'createdAt'|'updatedAt';
+export type Category = ProductCategory;
 
-export type Category = Omit<ProductCategoryMaxAggregateOutputType, "id"> & {
-    id: string;
-    name: string;
-    slug: string;
-}
-
-export type Product = Omit<ProductMinAggregateOutputType, 'price' | 'discount'> & {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    sku: string;
+export type Product = Omit<PrismaProduct, 'price' | 'discount'> & {
     discount: number;
     price: number;
-    quantity: number;
-    isActive: boolean;
-    isFeatured: boolean;
-    categoryId: string;
-    createdBy: string;
     category?: Category;
+    images?: ProductMedia[];
 }
 
 

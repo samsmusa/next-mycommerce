@@ -15,6 +15,11 @@ export function AppSidebar() {
             icon: <ShoppingBagIcon className="w-5 h-5 mr-2" />,
         },
         {
+            label: 'Categories',
+            href: '/admin/categories',
+            icon: <ShoppingBagIcon className="w-5 h-5 mr-2" />,
+        },
+        {
             label: 'Orders',
             href: '#',
             icon: <ShoppingCartIcon className="w-5 h-5 mr-2" />,

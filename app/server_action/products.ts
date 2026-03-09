@@ -66,6 +66,43 @@ export async function getProducts(
     };
 }
 
+export async function getBestSellingProducts(
+    { page = 1, limit = 10 }: PaginationParams = {}
+): Promise<PaginatedResponse<Product>> {
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+        prisma.product.findMany({
+            skip,
+            take: limit,
+            orderBy: { 
+                // In lieu of actual sales data right now, we can sort by 'isFeatured' or 'discount' or fall back to 'createdAt'
+                // Ideally this would join with OrderItem count, but for now we'll sort by 'createdAt' to prevent errors.
+                // You can update this to sort by real sales metrics when order pipeline is fully complete!
+                createdAt: "asc", // older ones might have more sales as placeholder
+            },
+            include: {
+                category: true,
+                images: {
+                    include: { media: true },
+                    orderBy: { order: "asc" },
+                },
+            },
+        }),
+        prisma.product.count(),
+    ]);
+
+    return {
+        data: products.map(serializeProduct),
+        meta: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+}
+
 export async function getProduct(id: string): Promise<Product> {
     const product = await prisma.product.findUnique({
         where: { id },
@@ -205,7 +242,7 @@ export async function createProduct(input: CreateProductInput): Promise<Product>
                     createdBy: validatedData.createdBy,
                     isActive: validatedData.isActive,
                     isFeatured: validatedData.isFeatured,
-                    coverImageId: null
+                    coverImageId: null,
                 },
             });
 
@@ -281,9 +318,8 @@ export async function updateProduct(
             }
         }
 
-        const updatedProduct = await prisma.product.update({
-            where: { id },
-            data: {
+        const updatedProduct = await prisma.$transaction(async (tx) => {
+            const productData: any = {
                 ...(validatedData.name && { name: validatedData.name }),
                 ...(validatedData.slug && { slug: validatedData.slug }),
                 ...(validatedData.sku && { sku: validatedData.sku }),
@@ -308,11 +344,48 @@ export async function updateProduct(
                 ...(validatedData.isFeatured !== undefined && {
                     isFeatured: validatedData.isFeatured,
                 }),
-            },
-            include: {
-                category: true,
-                images: { include: { media: true }, orderBy: { order: "asc" } },
-            },
+            };
+
+            let up = await tx.product.update({
+                where: { id },
+                data: productData,
+            });
+
+            if (validatedData.coverImageId) {
+                // Check if a ProductMedia already exists for this mediaId and productId
+                let pm = await tx.productMedia.findFirst({
+                    where: { productId: id, mediaId: validatedData.coverImageId }
+                });
+
+                if (!pm) {
+                    pm = await tx.productMedia.create({
+                        data: {
+                            productId: id,
+                            mediaId: validatedData.coverImageId,
+                            isPrimary: true,
+                            order: 0,
+                        },
+                    });
+                } else {
+                    pm = await tx.productMedia.update({
+                        where: { id: pm.id },
+                        data: { isPrimary: true, order: 0 }
+                    });
+                }
+
+                up = await tx.product.update({
+                    where: { id },
+                    data: { coverImageId: pm.id },
+                });
+            }
+
+            return await tx.product.findUniqueOrThrow({
+                where: { id },
+                include: {
+                    category: true,
+                    images: { include: { media: true }, orderBy: { order: "asc" } },
+                },
+            });
         });
 
         return serializeProduct(updatedProduct);

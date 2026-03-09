@@ -46,8 +46,8 @@ model User {
   accounts          Account[]
   orders            Order[]
   reviews           Review[]
-  wishlist          WishlistItem[]
-  cartlist          CartItem[]
+  wishlistItems     WishlistItem[]
+  cartItems         CartItem[]
   mediaGallery      Media[]
   products          Product[]
   shippingAddresses ShippingAddress[]
@@ -209,9 +209,9 @@ model Product {
   name           String
   slug           String        @unique
   description    String?
-  additinal_info Json?
+  additionalInfo Json?
   coverImageId   String?
-  cover_image    ProductMedia? @relation("productCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  coverImage     ProductMedia? @relation("productCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
   sku            String        @unique
   price          Decimal       @db.Decimal(10, 2)
   discount       Decimal       @default(0) @db.Decimal(10, 2)
@@ -236,7 +236,7 @@ model Product {
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
   cartItems     CartItem[]
-  ReviewSummary ReviewSummary?
+  reviewSummary ReviewSummary?
 
   @@index([categoryId])
   @@index([sku])
@@ -497,11 +497,11 @@ model Review {
 }
 
 model ReviewSummary {
-  id           String @id @default(cuid())
-  total_rating Int    @db.Integer
-  total_review Int    @db.Integer
-  total_sale   Int    @db.Integer
-  total_stock  Int    @db.Integer
+  id          String @id @default(cuid())
+  totalRating Int    @db.Integer
+  totalReview Int    @db.Integer
+  totalSale   Int    @db.Integer
+  totalStock  Int    @db.Integer
 
   productId String  @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -514,6 +514,7 @@ model ReviewSummary {
 model WishlistItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -529,7 +530,9 @@ model WishlistItem {
 // Cart Models
 model CartItem {
   id        String   @id @default(cuid())
+  quantity  Int      @default(1)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,9 +1,10 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import {Category, Product} from "@/app/types/product"
 import {PaginatedResponse} from "@/app/types/common";
-import {ProductCategoryMaxAggregateOutputType} from "@/prisma/prisma/models/ProductCategory";
+import {ProductCategory} from "@/prisma/prisma/client";
+import { CreateCategoryInput, UpdateCategoryInput, createCategorySchema, updateCategorySchema } from "@/app/zod/categories";
+import { z } from "zod";
 
 type PaginationParams = {
     page?: number;
@@ -13,7 +14,7 @@ type PaginationParams = {
 export async function getCategories({
                                       page = 1,
                                       limit = 10,
-                                  }: PaginationParams = {}): Promise<PaginatedResponse<ProductCategoryMaxAggregateOutputType>> {
+                                  }: PaginationParams = {}): Promise<PaginatedResponse<ProductCategory & { _count?: { products: number } }>> {
     const skip = (page - 1) * limit;
 
     const [categories, total] = await Promise.all([
@@ -21,25 +22,18 @@ export async function getCategories({
             skip,
             take: limit,
             orderBy: { createdAt: "desc" },
-            // include: {
-            //     category: {
-            //         select: {
-            //             id: true,
-            //             name: true,
-            //             slug: true,
-            //         },
-            //     },
-            // },
+            include: {
+                parent: true,
+                _count: {
+                    select: { products: true }
+                }
+            }
         }),
         prisma.productCategory.count(),
     ]);
 
-    const data = categories.map(category => ({
-        ...category,
-    }));
-
     return {
-        data,
+        data: categories,
         meta: {
             page,
             limit,
@@ -49,123 +43,67 @@ export async function getCategories({
     };
 }
 
-type CreateProductInput = {
-    name: string;
-    slug: string;
-    sku: string;
-    description?: string;
-    price: number;
-    discount?: number;
-    categoryId: string;
-    createdBy: string;
-};
-
-export async function createProduct(
-    data: CreateProductInput
-): Promise<Product> {
-    const product = await prisma.product.create({
-        data: {
-            name: data.name,
-            slug: data.slug,
-            sku: data.sku,
-            description: data.description,
-            price: data.price,
-            discount: data.discount,
-            categoryId: data.categoryId,
-            createdBy: data.createdBy,
-        },
-        include: {
-            category: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                },
-            },
-        },
-    });
-
-    return {
-        ...product,
-        price: product.price?.toNumber(),
-        discount: product.discount?.toNumber(),
-        createdAt: product.createdAt.toISOString(),
-        updatedAt: product.updatedAt.toISOString(),
-    };
-}
-
-
-
-export async function getProductById(
-    id: string
-): Promise<Product | null> {
-    const product = await prisma.product.findUnique({
+export async function getCategoryById(id: string): Promise<ProductCategory | null> {
+    return prisma.productCategory.findUnique({
         where: { id },
         include: {
-            category: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                },
-            },
-        },
+            parent: true
+        }
     });
-
-    if (!product) return null;
-
-    return {
-        ...product,
-        price: product.price?.toNumber(),
-        discount: product.discount?.toNumber(),
-        createdAt: product.createdAt.toISOString(),
-        updatedAt: product.updatedAt.toISOString(),
-    };
 }
 
-type UpdateProductInput = {
-    name?: string;
-    slug?: string;
-    description?: string;
-    price?: number;
-    discount?: number;
-    categoryId?: string;
-};
+export async function createCategory(input: CreateCategoryInput): Promise<ProductCategory> {
+    const validatedData = createCategorySchema.parse(input);
 
-export async function updateProduct(
-    id: string,
-    data: UpdateProductInput
-): Promise<Product> {
-    const product = await prisma.product.update({
-        where: { id },
-        data: {
-            name: data.name,
-            slug: data.slug,
-            description: data.description,
-            price: data.price,
-            discount: data.discount,
-            ...(data.categoryId && {
-                category: {
-                    connect: { id: data.categoryId },
-                },
-            }),
-        },
-        include: {
-            category: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                },
-            },
-        },
-    });
+    try {
+        const category = await prisma.productCategory.create({
+            data: {
+                name: validatedData.name,
+                slug: validatedData.slug,
+                description: validatedData.description,
+                image: validatedData.image,
+                parentId: validatedData.parentId,
+            }
+        });
+        return category;
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            throw new Error(`Validation error: ${error.message}`);
+        }
+        throw error;
+    }
+}
 
-    return {
-        ...product,
-        price: product.price?.toNumber(),
-        discount: product.discount?.toNumber(),
-        createdAt: product.createdAt.toISOString(),
-        updatedAt: product.updatedAt.toISOString(),
-    };
+export async function updateCategory(id: string, input: UpdateCategoryInput): Promise<ProductCategory> {
+    const validatedData = updateCategorySchema.parse(input);
+
+    try {
+        const category = await prisma.productCategory.update({
+            where: { id },
+            data: {
+                name: validatedData.name,
+                slug: validatedData.slug,
+                description: validatedData.description,
+                image: validatedData.image,
+                parentId: validatedData.parentId,
+            }
+        });
+        return category;
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            throw new Error(`Validation error: ${error.message}`);
+        }
+        throw error;
+    }
+}
+
+export async function deleteCategory(id: string): Promise<{ success: boolean }> {
+    try {
+        await prisma.productCategory.delete({
+            where: { id }
+        });
+        return { success: true };
+    } catch (error) {
+        throw new Error("Failed to delete category");
+    }
 }
